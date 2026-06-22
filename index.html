@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Коллекция LEGO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+  :root {
+    --bg: #F7F4EE;
+    --ink: #1A1A18;
+    --ink-soft: #5C5A52;
+    --line: #E2DDD0;
+    --card: #FFFFFF;
+    --yellow: #FFD500;
+    --yellow-deep: #E6B800;
+    --red: #D0102A;
+    --blue: #0058A3;
+    --green: #1C7A3C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== HEADER ===== */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg);
+    border-bottom: 2px solid var(--ink);
+    padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 36px; height: 36px; background: var(--red);
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.25);
+  }
+  .brand-mark::before { content: ''; width: 14px; height: 14px; background: var(--yellow); border-radius: 50%; }
+  .brand-text { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .brand-sub { font-size: 11px; color: var(--ink-soft); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+  .count-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 700;
+    background: var(--ink); color: var(--bg);
+    padding: 6px 12px; border-radius: 20px;
+  }
+  .search-box {
+    flex: 1; min-width: 200px; max-width: 320px;
+    padding: 9px 14px; border: 1.5px solid var(--line); border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-size: 14px; background: var(--card);
+  }
+  .search-box:focus { outline: none; border-color: var(--ink); }
+
+  /* ===== LAYOUT ===== */
+  .layout { display: flex; max-width: 1400px; margin: 0 auto; }
+
+  .filters {
+    width: 230px; flex-shrink: 0;
+    padding: 24px 18px;
+    position: sticky; top: 73px; height: fit-content;
+    max-height: calc(100vh - 73px); overflow-y: auto;
+  }
+  .filter-group { margin-bottom: 26px; }
+  .filter-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-soft); margin-bottom: 10px;
+  }
+  .filter-opt {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 13.5px; color: var(--ink); margin-bottom: 2px;
+    transition: background 0.12s;
+  }
+  .filter-opt:hover { background: var(--line); }
+  .filter-opt.active { background: var(--ink); color: var(--bg); }
+  .filter-opt .n { font-family: 'JetBrains Mono', monospace; font-size: 11px; opacity: 0.55; }
+  .filter-opt.active .n { opacity: 0.7; }
+  .reset-btn {
+    font-size: 12px; color: var(--red); font-weight: 600; cursor: pointer;
+    border: none; background: none; padding: 4px 0; text-decoration: underline;
+  }
+
+  .main { flex: 1; padding: 24px; min-width: 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  /* ===== CARD ===== */
+  .card {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.08); }
+
+  .card-img-wrap {
+    position: relative;
+    aspect-ratio: 4/3;
+    background: #EDE9DE;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .card-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+  .set-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--yellow); color: var(--ink);
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12.5px;
+    padding: 4px 9px; border-radius: 6px;
+    box-shadow: inset 0 -2px 0 var(--yellow-deep);
+  }
+  .status-badge {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .status-active { background: #DCF0E0; color: var(--green); }
+  .status-retired { background: #F3E1E1; color: var(--red); }
+
+  .card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .card-theme { font-size: 10.5px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.04em; }
+  .card-title { font-size: 16px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
+  .card-meta { display: flex; gap: 12px; font-size: 12.5px; color: var(--ink-soft); flex-wrap: wrap; }
+  .card-meta b { color: var(--ink); font-weight: 600; }
+
+  .card-prices {
+    margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .price-block { font-size: 11px; color: var(--ink-soft); }
+  .price-block .val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--ink); display: block; }
+  .price-block.resale .val { color: var(--green); }
+  .instr-link {
+    font-size: 11.5px; font-weight: 600; color: var(--blue);
+    text-decoration: none; border-bottom: 1.5px solid currentColor; padding-bottom: 1px;
+  }
+
+  .empty-state {
+    text-align: center; padding: 80px 20px; color: var(--ink-soft);
+  }
+  .empty-state .big { font-size: 40px; margin-bottom: 12px; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(20,18,14,0.55);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 18px; max-width: 560px; width: 100%;
+    max-height: 88vh; overflow-y: auto; position: relative;
+  }
+  .modal-close {
+    position: absolute; top: 14px; right: 14px; z-index: 5;
+    width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.9);
+    border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .modal-img { width: 100%; aspect-ratio: 16/10; background: #EDE9DE; display: flex; align-items: center; justify-content: center; }
+  .modal-img img { width: 100%; height: 100%; object-fit: contain; padding: 24px; }
+  .modal-body { padding: 22px 26px 28px; }
+  .modal-theme { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.05em; }
+  .modal-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 14px; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .stat-box { background: var(--bg); border-radius: 10px; padding: 10px 12px; }
+  .stat-label { font-size: 10.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .modal-desc { font-size: 14px; line-height: 1.6; color: #3a3833; margin-bottom: 18px; }
+  .modal-footer { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-instr {
+    flex: 1; text-align: center; padding: 11px; border-radius: 10px;
+    background: var(--ink); color: var(--bg); text-decoration: none;
+    font-size: 13.5px; font-weight: 600;
+  }
+
+  @media (max-width: 860px) {
+    .layout { flex-direction: column; }
+    .filters {
+      width: 100%; position: static; max-height: none;
+      display: flex; gap: 18px; overflow-x: auto; padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .filter-group { margin-bottom: 0; flex-shrink: 0; min-width: 140px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <div class="brand-text">Моя коллекция</div>
+      <div class="brand-sub">LEGO каталог</div>
+    </div>
+  </div>
+  <input type="text" class="search-box" id="searchBox" placeholder="Поиск по номеру или названию…">
+  <div class="count-pill" id="countPill">5 наборов</div>
+</div>
+
+<div class="layout">
+  <aside class="filters">
+    <div class="filter-group">
+      <div class="filter-title">Тема</div>
+      <div id="themeFilters"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">Год выпуска</div>
+      <div id="yearFilters"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-title">Статус</div>
+      <div id="statusFilters"></div>
+    </div>
+    <button class="reset-btn" onclick="resetFilters()">Сбросить фильтры</button>
+  </aside>
+
+  <main class="main">
+    <div class="grid" id="grid"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="big">🧱</div>
+      <div>Наборов не найдено — попробуйте изменить фильтры</div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+const SETS = [
+  {
+    num: "60046",
+    name: "Helicopter Surveillance",
+    theme: "City",
+    subtheme: "Police",
+    year: 2014,
+    pieces: 528,
+    minifigs: 5,
+    status: "retired",
+    rrp: "$74.99",
+    resale: "$126",
+    designer: "Pierre Normandin",
+    ageRange: "5–12",
+    img: "img/60046-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60046",
+    desc: "Полицейский вертолёт наблюдения преследует грузовик преступников по City. В комплекте 5 минифигурок, 2 из которых эксклюзивны только для этого набора — редкость для коллекционеров City Police 2014 года."
+  },
+  {
+    num: "60423",
+    name: "Downtown Streetcar and Station",
+    theme: "City",
+    subtheme: "Trains",
+    year: 2024,
+    pieces: 811,
+    minifigs: 6,
+    status: "active",
+    rrp: "$89.99",
+    resale: "—",
+    designer: "Corvin Stichert",
+    ageRange: "7+",
+    img: "img/60423-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60423",
+    desc: "Городской трамвай с действующей станцией: кафе, скамейки, инвалидное кресло и собака на платформе. Все 6 минифигурок уникальны для набора — современная City Trains волна 2024 года."
+  },
+  {
+    num: "17101",
+    name: "Boost Creative Toolbox",
+    theme: "Boost",
+    subtheme: "—",
+    year: 2017,
+    pieces: 843,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$159.99",
+    resale: "$205",
+    designer: "Carl Merriam, Jørn Thomsen",
+    ageRange: "7–12",
+    img: "img/17101-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/17101",
+    desc: "Программируемый робототехнический набор с приложением: 5 моделей включая Верни робота и говорящего кота Фрэнки. Снят с производства в 2022 — растёт в цене на вторичном рынке как первый набор линейки Boost."
+  },
+  {
+    num: "31131",
+    name: "Downtown Noodle Shop",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2022,
+    pieces: 569,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$44.99",
+    resale: "$50",
+    designer: "Morten Rauff",
+    ageRange: "8+",
+    img: "img/31131-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31131",
+    desc: "Трёхвариантная модель: лапшичная, аркада с игровыми автоматами или мастерская по ремонту велосипедов. Часть линии Creator 3-in-1, которая хорошо стыкуется в уличные композиции с другими городскими наборами серии."
+  },
+  {
+    num: "42118",
+    name: "Monster Jam Grave Digger",
+    theme: "Technic",
+    subtheme: "Monster Jam",
+    year: 2021,
+    pieces: 212,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$29",
+    designer: "—",
+    ageRange: "7+",
+    img: "img/42118-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/42118",
+    desc: "Монстр-трак Grave Digger с откатным механизмом, который пересобирается в багги для бездорожья. Лицензированный сет Monster Jam — компактная модель для коллекции Technic с двумя вариантами сборки."
+  },
+  {
+    num: "60017",
+    name: "Flatbed Truck",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2013,
+    pieces: 212,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$33",
+    designer: "Pierre Normandin",
+    ageRange: "6–12",
+    img: "img/60017-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60017",
+    desc: "Эвакуатор с лебёдкой вытаскивает сломавшийся автомобиль на ремонт. Один из ранних наборов линии Great Vehicles — классический формат City начала 2010-х с одной уникальной минифигуркой."
+  },
+  {
+    num: "60385",
+    name: "Construction Digger",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2023,
+    pieces: 148,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$18",
+    designer: "Robert Heim",
+    ageRange: "5+",
+    img: "img/60385-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60385",
+    desc: "Компактный экскаватор-погрузчик с отбойным молотком и сменными насадками — ковш или вилы. Бюджетная строительная техника из волны City Construction 2023 года."
+  },
+  {
+    num: "60219",
+    name: "Construction Loader",
+    theme: "City",
+    subtheme: "Construction",
+    year: 2019,
+    pieces: 88,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$14",
+    designer: "Robert Heim",
+    ageRange: "5+",
+    img: "img/60219-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60219",
+    desc: "Небольшой фронтальный погрузчик — простой и доступный набор для самых маленьких строителей City. Входит в стартовую линейку Construction 2019 года."
+  },
+  {
+    num: "60398",
+    name: "Family House and Electric Car",
+    theme: "City",
+    subtheme: "Town",
+    year: 2023,
+    pieces: 462,
+    minifigs: 3,
+    status: "retired",
+    rrp: "$59.99",
+    resale: "$102",
+    designer: "Aaron Newman",
+    ageRange: "6+",
+    img: "img/60398-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60398",
+    desc: "Современный частный дом с электромобилем, зарядной станцией, теплицей и солнечными панелями. Семья из трёх минифигурок и акцент на экологичный образ жизни — редкая жилая постройка в линии City."
+  },
+  {
+    num: "60159",
+    name: "Jungle Halftrack Mission",
+    theme: "City",
+    subtheme: "Jungle",
+    year: 2017,
+    pieces: 378,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$39.99",
+    resale: "$49",
+    designer: "—",
+    ageRange: "6–12",
+    img: "img/60159-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60159",
+    desc: "Полугусеничный вездеход и багги исследуют джунгли в поисках затерянного храма. В комплекте новая фигурка пантеры — один из самых желанных элементов волны Jungle 2017 года."
+  },
+  {
+    num: "60294",
+    name: "Stunt Show Truck",
+    theme: "City",
+    subtheme: "Stuntz",
+    year: 2021,
+    pieces: 420,
+    minifigs: 4,
+    status: "retired",
+    rrp: "$69.99",
+    resale: "$37",
+    designer: "Robert Heim",
+    ageRange: "6+",
+    img: "img/60294-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60294",
+    desc: "Грузовик с трюковой ареной: трамплин для байка на маховике, мишень и бак для каскадёра-клоуна. 3 из 4 минифигурок — персонажи мультсериала LEGO City Adventures."
+  },
+  {
+    num: "60156",
+    name: "Jungle Buggy",
+    theme: "City",
+    subtheme: "Jungle",
+    year: 2017,
+    pieces: 53,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$6.99",
+    resale: "$9",
+    designer: "—",
+    ageRange: "5–12",
+    img: "img/60156-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60156",
+    desc: "Миниатюрный багги-исследователь со статуей, в которой спрятан алмаз, и фигуркой красного паука. Самый доступный по цене набор волны Jungle 2017 года."
+  },
+  {
+    num: "60365",
+    name: "Apartment Building",
+    theme: "City",
+    subtheme: "Town",
+    year: 2023,
+    pieces: 688,
+    minifigs: 6,
+    status: "active",
+    rrp: "$94.99",
+    resale: "$66",
+    designer: "Aaron Newman",
+    ageRange: "6+",
+    img: "img/60365-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60365",
+    desc: "Многоэтажный жилой дом со спортзалом, магазином и шестью жильцами разных квартир. Часть формата Mini Modular линии City Town — компактная альтернатива большим модульным зданиям."
+  },
+  {
+    num: "60059",
+    name: "Logging Truck",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2014,
+    pieces: 228,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$85",
+    designer: "—",
+    ageRange: "5–12",
+    img: "img/60059-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60059",
+    desc: "Лесовозный грузовик с краном-захватом и бензопилой для лесоруба. Хорошо подорожал на вторичном рынке — почти в 4 раза выше цены выпуска."
+  },
+  {
+    num: "10764",
+    name: "City Central Airport",
+    theme: "Juniors",
+    subtheme: "City",
+    year: 2018,
+    pieces: 376,
+    minifigs: 5,
+    status: "retired",
+    rrp: "$49.99",
+    resale: "$55",
+    designer: "Astrid Bonfante",
+    ageRange: "4–7",
+    img: "img/10764-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/10764",
+    desc: "Упрощённый аэропорт линии Juniors с конвейерной лентой, диспетчерской вышкой и двумя самолётами на стартовых платформах. Рассчитан на детей 4–7 лет с упрощённой сборкой."
+  },
+  {
+    num: "60018",
+    name: "Cement Mixer",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2013,
+    pieces: 221,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$62",
+    designer: "Henrik Andersen",
+    ageRange: "5–12",
+    img: "img/60018-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60018",
+    desc: "Бетономешалка с поворотным барабаном и откидной кабиной для загрузки. Один из классических наборов линии Great Vehicles 2013 года — заметно вырос в цене на вторичке."
+  },
+  {
+    num: "60016",
+    name: "Tanker Truck",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2013,
+    pieces: 191,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$93",
+    designer: "Pierre Normandin",
+    ageRange: "5–12",
+    img: "img/60016-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60016",
+    desc: "Топливозаправщик Octan с цистерной для АЗС City. Простой набор Great Vehicles 2013 года, который один из самых подорожавших в этой линейке — почти в 5 раз выше цены выпуска."
+  },
+  {
+    num: "31077",
+    name: "Modular Sweet Surprises",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2018,
+    pieces: 396,
+    minifigs: 3,
+    status: "retired",
+    rrp: "$39.99",
+    resale: "$44",
+    designer: "Morten Graff-Wang",
+    ageRange: "8–12",
+    img: "img/31077-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31077",
+    desc: "Трёхвариантная модель: кондитерская с банкоматом, ресторан или дом с бассейном. Mini Modular здание из линии Creator 3-in-1, хорошо стыкуется с другими городскими постройками серии."
+  },
+  {
+    num: "60003",
+    name: "Fire Emergency",
+    theme: "City",
+    subtheme: "Fire",
+    year: 2013,
+    pieces: 301,
+    minifigs: 3,
+    status: "retired",
+    rrp: "$39.99",
+    resale: "$43",
+    designer: "—",
+    ageRange: "5–12",
+    img: "img/60003-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60003",
+    desc: "Пожарная машина с выдвижной лестницей спасает горящий дом. Классический набор линии City Fire 2013 года с тремя минифигурками, включая редкого пожарного с уникальным принтом."
+  },
+  {
+    num: "60213",
+    name: "Dock Side Fire",
+    theme: "City",
+    subtheme: "Fire",
+    year: 2019,
+    pieces: 97,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$12",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60213-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60213",
+    desc: "Плавающий пожарный катер с водомётом тушит возгорание у причала. Компактный набор City Fire 2019 года с доком, бочками и предупреждающим знаком."
+  },
+  {
+    num: "60212",
+    name: "Barbecue Burn Out",
+    theme: "City",
+    subtheme: "Fire",
+    year: 2019,
+    pieces: 64,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$9",
+    designer: "—",
+    ageRange: "4+",
+    img: "img/60212-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60212",
+    desc: "Загоревшийся гриль на пикнике тушит пожарная машина с подъёмником. Самый бюджетный набор волны City Fire 2019 года, рассчитан на детей от 4 лет."
+  },
+  {
+    num: "4432",
+    name: "Garbage Truck",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2012,
+    pieces: 208,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$51",
+    designer: "Henrik Andersen",
+    ageRange: "5–12",
+    img: "img/4432-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/4432",
+    desc: "Мусоровоз с поднимающимся кузовом и контейнерами для вторсырья. Один из самых популярных наборов Great Vehicles — свыше 15000 коллекционеров отметили его как имеющийся в коллекции на Brickset."
+  },
+  {
+    num: "60407",
+    name: "Double-Decker Sightseeing Bus",
+    theme: "City",
+    subtheme: "Traffic",
+    year: 2024,
+    pieces: 384,
+    minifigs: 5,
+    status: "active",
+    rrp: "$29.99",
+    resale: "—",
+    designer: "Salvatore Sciuto",
+    ageRange: "7+",
+    img: "img/60407-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60407",
+    desc: "Двухэтажный экскурсионный автобус с рабочей лестницей на второй этаж — редкая функциональная деталь для City. Дизайнер Сальваторе Шуто разработал концепт во время стажировки в LEGO."
+  },
+  {
+    num: "60251",
+    name: "Monster Truck",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2020,
+    pieces: 55,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$12",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60251-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60251",
+    desc: "Компактный монстр-трак на больших колёсах для бездорожья. Бюджетный набор линейки Great Vehicles 2020 года с одной минифигуркой."
+  },
+  {
+    num: "60341",
+    name: "The Knockdown Stunt Challenge",
+    theme: "City",
+    subtheme: "Stuntz",
+    year: 2022,
+    pieces: 117,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$34.99",
+    resale: "$15",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60341-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60341",
+    desc: "Каскадёрский трюк с мотоциклом на маховике, который сбивает мишень со светящимися в темноте элементами. Персонажи Galactic Poppy Star и Harl Hubbs из мультсериала LEGO City Adventures."
+  },
+  {
+    num: "60324",
+    name: "Mobile Crane",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2022,
+    pieces: 340,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$39.99",
+    resale: "$45",
+    designer: "Robert Heim",
+    ageRange: "7+",
+    img: "img/60324-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60324",
+    desc: "Автокран с выдвижными опорами, поворотной стрелой и лебёдкой на тросе. Финалист Brickset Awards — высоко оценён коллекционерами за реалистичный механизм работы крана."
+  },
+  {
+    num: "21166",
+    name: "The 'Abandoned' Mine",
+    theme: "Minecraft",
+    subtheme: "Minifig-scale",
+    year: 2021,
+    pieces: 248,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$21",
+    designer: "Joe Kyde",
+    ageRange: "7+",
+    img: "img/21166-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/21166",
+    desc: "Заброшенная шахта с лавой, паутиной и крафтинг-столом — классическая сцена Minecraft с зомби и пауком. Steve противостоит мобам в подземном туннеле с рельсами для вагонетки."
+  },
+  {
+    num: "21171",
+    name: "The Horse Stable",
+    theme: "Minecraft",
+    subtheme: "Minifig-scale",
+    year: 2021,
+    pieces: 241,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$22",
+    designer: "Esa Nousiainen",
+    ageRange: "8+",
+    img: "img/21171-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/21171",
+    desc: "Конюшня с обычной и скелетной лошадью — редкая комбинация в наборах Minecraft. Алекс ухаживает за животными на ферме рядом со стойлом."
+  },
+  {
+    num: "21179",
+    name: "The Mushroom House",
+    theme: "Minecraft",
+    subtheme: "Minifig-scale",
+    year: 2022,
+    pieces: 272,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$24.99",
+    resale: "$24",
+    designer: "—",
+    ageRange: "8+",
+    img: "img/21179-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/21179",
+    desc: "Грибной дом с садом, грядкой коров-мушрумов и скелетом-наездником на пауке. Один из самых атмосферных наборов биома Mushroom Fields в линии Minecraft."
+  },
+  {
+    num: "31140",
+    name: "Magical Unicorn",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2023,
+    pieces: 145,
+    minifigs: 0,
+    status: "active",
+    rrp: "$9.99",
+    resale: "—",
+    designer: "George Gilliatt",
+    ageRange: "7+",
+    img: "img/31140-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31140",
+    desc: "Волшебный единорог пересобирается в морского конька или сказочную птицу. Дизайнер годами добивался выпуска этого набора — финальная версия использует две арочные детали вместо цельного кирпича для совместимости с альтернативными моделями."
+  },
+  {
+    num: "60226",
+    name: "Mars Research Shuttle",
+    theme: "City",
+    subtheme: "Mars Exploration",
+    year: 2019,
+    pieces: 273,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$39.99",
+    resale: "$37",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60226-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60226",
+    desc: "Шаттл с раскрывающейся кабиной и марсоход с шарнирной клешнёй исследуют поверхность Марса. Вдохновлён реальной программой NASA, включает дрон-сканер для расшифровки секретного символа."
+  },
+  {
+    num: "40417",
+    name: "Year of the Ox",
+    theme: "Seasonal",
+    subtheme: "Chinese Traditional Festival",
+    year: 2021,
+    pieces: 168,
+    minifigs: 0,
+    status: "retired",
+    rrp: "—",
+    resale: "$10",
+    designer: "Mel Caddick",
+    ageRange: "7+",
+    img: "img/40417-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/40417",
+    desc: "Бык — символ китайского зодиака — в мультяшной антропоморфной позе. Часть ежегодной серии подарочных наборов лунного нового года, которую LEGO выпускает с 2013 года."
+  },
+  {
+    num: "40440",
+    name: "German Shepherds",
+    theme: "BrickHeadz",
+    subtheme: "Pets",
+    year: 2021,
+    pieces: 247,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$14.99",
+    resale: "$16",
+    designer: "Diego Sancho",
+    ageRange: "8+",
+    img: "img/40440-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/40440",
+    desc: "Немецкая овчарка со щенком в декоративной корзине — модели BrickHeadz №118 и №119. Из первой волны питомцев линии, с подвижным хвостом у взрослой собаки."
+  },
+  {
+    num: "60301",
+    name: "Wildlife Rescue Off-Roader",
+    theme: "City",
+    subtheme: "Wildlife Rescue",
+    year: 2021,
+    pieces: 157,
+    minifigs: 3,
+    status: "retired",
+    rrp: "$49.99",
+    resale: "$31",
+    designer: "—",
+    ageRange: "4+",
+    img: "img/60301-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60301",
+    desc: "Внедорожник спасает льва и львёнка в саванне — персонаж Jessica Sharpe из мультсериала LEGO City Adventures. Часть волны Wildlife Rescue 2021 года с новыми формами животных."
+  },
+  {
+    num: "60085",
+    name: "4x4 with Powerboat",
+    theme: "City",
+    subtheme: "Racing",
+    year: 2015,
+    pieces: 301,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$29.99",
+    resale: "$36",
+    designer: "—",
+    ageRange: "5–12",
+    img: "img/60085-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60085",
+    desc: "Внедорожник с прицепом везёт гоночный катер к воде. Классический набор City Racing 2015 года с двумя уникальными минифигурками."
+  },
+  {
+    num: "60250",
+    name: "Mail Plane",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2020,
+    pieces: 74,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$16",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60250-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60250",
+    desc: "Почтовый винтовой самолёт доставляет посылки. Компактный бюджетный набор линейки Great Vehicles 2020 года с одной минифигуркой."
+  },
+  {
+    num: "60383",
+    name: "Electric Sports Car",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2023,
+    pieces: 95,
+    minifigs: 1,
+    status: "active",
+    rrp: "$9.99",
+    resale: "$8",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60383-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60383",
+    desc: "Электрический спорткар с зарядной станцией и солнечной панелью. Современный набор City 2023 года, отражающий растущий интерес LEGO к экологичному транспорту."
+  },
+  {
+    num: "60362",
+    name: "Car Wash",
+    theme: "City",
+    subtheme: "Town",
+    year: 2023,
+    pieces: 243,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$32.99",
+    resale: "$24",
+    designer: "Nathan Clark",
+    ageRange: "6+",
+    img: "img/60362-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60362",
+    desc: "Автомойка с поднимающейся щёткой, аппаратом самообслуживания и внедорожником. Мини-модульное здание формата Town 2023 года — хорошо вписывается в городскую застройку."
+  },
+  {
+    num: "60253",
+    name: "Ice-Cream Truck",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2020,
+    pieces: 200,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$21",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60253-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60253",
+    desc: "Фургончик мороженого с открывающейся боковой стенкой, роликами и верным псом. Финалист Brickset Awards 2020 — один из самых популярных наборов Great Vehicles своего года."
+  },
+  {
+    num: "60276",
+    name: "Police Prisoner Transport",
+    theme: "City",
+    subtheme: "Police",
+    year: 2021,
+    pieces: 244,
+    minifigs: 4,
+    status: "retired",
+    rrp: "$29.99",
+    resale: "$33",
+    designer: "Robert Heim",
+    ageRange: "5+",
+    img: "img/60276-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60276",
+    desc: "Броневик-конвой с функцией побега из тюрьмы, грузовик преступников и мотоцикл Дюка ДеТейна. 3 из 4 минифигурок — персонажи мультсериала LEGO City Adventures."
+  },
+  {
+    num: "60267",
+    name: "Safari Off-Roader",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2020,
+    pieces: 168,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$22",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60267-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60267",
+    desc: "Сафари-внедорожник в зебровой расцветке с камерой, костюмом дерева для фотографа и фигуркой льва. Набор скрыто отсылает к классическому 6672 — 60267 содержит цифры 6672 в другом порядке."
+  },
+  {
+    num: "60043",
+    name: "Prisoner Transporter",
+    theme: "City",
+    subtheme: "Police",
+    year: 2014,
+    pieces: 196,
+    minifigs: 3,
+    status: "retired",
+    rrp: "$24.99",
+    resale: "$47",
+    designer: "—",
+    ageRange: "5–12",
+    img: "img/60043-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60043",
+    desc: "Бронированный транспортёр заключённых с функцией побега и квадроциклом преступника. Набор 2014 года хорошо вырос в цене — почти вдвое от цены выпуска на вторичном рынке."
+  },
+  {
+    num: "60401",
+    name: "Construction Steamroller",
+    theme: "City",
+    subtheme: "Construction",
+    year: 2024,
+    pieces: 78,
+    minifigs: 1,
+    status: "active",
+    rrp: "$9.99",
+    resale: "—",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60401-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60401",
+    desc: "Компактный дорожный каток с мигалкой и кабиной для водителя. Бюджетный строительный набор City Construction 2024 года — отличное дополнение к коллекции строительной техники."
+  },
+  {
+    num: "60025",
+    name: "Grand Prix Truck",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2013,
+    pieces: 315,
+    minifigs: 3,
+    status: "retired",
+    rrp: "$29.99",
+    resale: "$75",
+    designer: "—",
+    ageRange: "5–12",
+    img: "img/60025-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60025",
+    desc: "Фура Octan с прицепом-трейлером перевозит гоночный болид Формулы-1 с открывающимися дверями кабины. Один из самых ценных наборов Great Vehicles 2013 года — вырос в цене в 2,5 раза."
+  },
+  {
+    num: "60404",
+    name: "Burger Truck",
+    theme: "City",
+    subtheme: "Traffic",
+    year: 2024,
+    pieces: 194,
+    minifigs: 2,
+    status: "active",
+    rrp: "$19.99",
+    resale: "—",
+    designer: "Robert Heim",
+    ageRange: "5+",
+    img: "img/60404-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60404",
+    desc: "Фургон-бургерная с огромным гамбургером-витриной, который отстёгивается в отдельный стенд. Все принты напечатаны без наклеек — высоко оценён коллекционерами за детализацию и обе уникальные минифигурки."
+  },
+  {
+    num: "31146",
+    name: "Flatbed Truck with Helicopter",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2024,
+    pieces: 270,
+    minifigs: 0,
+    status: "active",
+    rrp: "$19.99",
+    resale: "—",
+    designer: "Morten Graff-Wang",
+    ageRange: "7+",
+    img: "img/31146-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31146",
+    desc: "Трёхвариантная модель: грузовик-эвакуатор с вертолётом на платформе, самолёт с топливозаправщиком или хот-род с внедорожником. Набор Creator 3-in-1 2024 года от дизайнера Morten Graff-Wang."
+  },
+  {
+    num: "60222",
+    name: "Snow Groomer",
+    theme: "City",
+    subtheme: "Traffic",
+    year: 2019,
+    pieces: 197,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$29",
+    designer: "Corvin Stichert",
+    ageRange: "6+",
+    img: "img/60222-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60222",
+    desc: "Ратрак с поднимающимся отвалом, гусеницами и снежной пушкой на вращающейся турели. Дизайнер Corvin Stichert сделал цвет и пропорции отсылкой к реальным машинам PistenBully."
+  },
+  {
+    num: "7639",
+    name: "Camper",
+    theme: "City",
+    subtheme: "Great Outdoors",
+    year: 2009,
+    pieces: 165,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$16.99",
+    resale: "$42",
+    designer: "—",
+    ageRange: "5–12",
+    img: "img/7639-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/7639",
+    desc: "Кемпер-фургон с раскладывающимися стенками, кухней, спальным местом, сёрфингом и велосипедом на крыше. Один из самых оцениваемых наборов City Great Outdoors — более 16000 владельцев на Brickset."
+  },
+  {
+    num: "41712",
+    name: "Recycling Truck",
+    theme: "Friends",
+    subtheme: "Traffic",
+    year: 2022,
+    pieces: 259,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$9",
+    designer: "David Tauzia",
+    ageRange: "6+",
+    img: "img/41712-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/41712",
+    desc: "Мусоровоз Friends с Эммой и Ривер сортируют отходы у реки — первый набор линии на экологическую тему. В комплекте два енота и раздельные контейнеры для переработки."
+  },
+  {
+    num: "60344",
+    name: "Chicken Henhouse",
+    theme: "City",
+    subtheme: "Farm",
+    year: 2022,
+    pieces: 101,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$18",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60344-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60344",
+    desc: "Курятник с выдвижным лотком для яиц, двумя курами и квадроциклом с наклонным рулевым управлением. Часть дебютной волны City Farm 2022 года — стоимость почти удвоилась на вторичке."
+  },
+  {
+    num: "60340",
+    name: "The Blade Stunt Challenge",
+    theme: "City",
+    subtheme: "Stuntz",
+    year: 2022,
+    pieces: 154,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$34.99",
+    resale: "$10",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60340-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60340",
+    desc: "Трюкач на маховиковом байке проносится сквозь барьер с падающими клинками. Персонаж Ширли Кипер из мультсериала LEGO City Adventures — одна из двух уникальных минифигурок."
+  },
+  {
+    num: "75909",
+    name: "McLaren P1",
+    theme: "Speed Champions",
+    subtheme: "McLaren",
+    year: 2015,
+    pieces: 168,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$14.99",
+    resale: "$55",
+    designer: "—",
+    ageRange: "7+",
+    img: "img/75909-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/75909",
+    desc: "McLaren P1 в ярко-оранжевом цвете — один из первых четырёх наборов Speed Champions, дебютировавшей в 2015 году. Один из лучших коллекционных наборов раннего Speed Champions — вырос в цене почти в 4 раза."
+  },
+  {
+    num: "60312",
+    name: "Police Car",
+    theme: "City",
+    subtheme: "Police",
+    year: 2022,
+    pieces: 94,
+    minifigs: 1,
+    status: "active",
+    rrp: "$9.99",
+    resale: "—",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60312-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60312",
+    desc: "Полицейский патрульный автомобиль со спортивными дисками и широкими крыльями. Бюджетный начальный набор City Police 2022 года с одной уникальной минифигуркой офицера."
+  },
+  {
+    num: "40188",
+    name: "Pencil Pot",
+    theme: "Miscellaneous",
+    subtheme: "Accessories",
+    year: 2018,
+    pieces: 187,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$12.99",
+    resale: "$18",
+    designer: "Kenneth Lylover",
+    ageRange: "7+",
+    img: "img/40188-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/40188",
+    desc: "Функциональная подставка для карандашей в виде газончика с газонокосилкой. Линейно-эксклюзивный набор LEGO 2018 года с уникальной минифигуркой садовника."
+  },
+  {
+    num: "31078",
+    name: "Treehouse Treasures",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2018,
+    pieces: 260,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$29.99",
+    resale: "$36",
+    designer: "Jeremy Luettgen",
+    ageRange: "7+",
+    img: "img/31078-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31078",
+    desc: "Домик на дереве с медведем пересобирается в башню наблюдателей или пиратский корабль. Набор Creator 3-in-1 2018 года с двумя уникальными минифигурками и картой сокровищ."
+  },
+  {
+    num: "31116",
+    name: "Safari Wildlife Tree House",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2021,
+    pieces: 397,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$29.99",
+    resale: "$27",
+    designer: "George Gilliatt",
+    ageRange: "7+",
+    img: "img/31116-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31116",
+    desc: "Дом на дереве в африканской саванне с жирафом, фламинго и птицей-носорогом пересобирается в биплан или катамаран. В каждой из трёх моделей — уникальные сборные животные."
+  },
+  {
+    num: "31034",
+    name: "Future Flyer",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2015,
+    pieces: 237,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$24.99",
+    resale: "$74",
+    designer: "—",
+    ageRange: "6–12",
+    img: "img/31034-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31034",
+    desc: "Футуристический робот с ракетными ускорителями в ногах и съёмным реактивным ранцем пересобирается в истребитель или спорткар. Рост стоимости с 2015 года составил почти 200%."
+  },
+  {
+    num: "31029",
+    name: "Cargo Heli",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2015,
+    pieces: 132,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$14",
+    designer: "Mike Psiaki",
+    ageRange: "6–12",
+    img: "img/31029-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31029",
+    desc: "Грузовой вертолёт с крюком для контейнера пересобирается в самолёт или грузовое судно. Компактный бюджетный набор Creator 3-in-1 2015 года от дизайнера Mike Psiaki."
+  },
+  {
+    num: "60123",
+    name: "Volcano Supply Helicopter",
+    theme: "City",
+    subtheme: "Volcano Explorers",
+    year: 2016,
+    pieces: 330,
+    minifigs: 3,
+    status: "retired",
+    rrp: "$49.99",
+    resale: "$70",
+    designer: "—",
+    ageRange: "7–12",
+    img: "img/60123-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60123",
+    desc: "Вертолёт снабжения, гусеничный экскаватор и инструмент для вскрытия вулканических пород. Часть редкой подтемы Volcano Explorers 2016 года — один из самых крупных и дорогостоящих наборов серии."
+  },
+  {
+    num: "31054",
+    name: "Blue Express",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2017,
+    pieces: 71,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$4.99",
+    resale: "$12",
+    designer: "Gemma Anderson",
+    ageRange: "6–12",
+    img: "img/31054-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31054",
+    desc: "Миниатюрный паровоз с классическим дизайном танк-локомотива пересобирается в пассажирский вагон или скоростной поезд. Самый бюджетный набор Creator с паровозной тематикой."
+  },
+  {
+    num: "31015",
+    name: "Emerald Express",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2014,
+    pieces: 56,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$4.99",
+    resale: "$14",
+    designer: "Mike Psiaki",
+    ageRange: "6–12",
+    img: "img/31015-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31015",
+    desc: "Зелёный паровоз пересобирается в ракетный поезд или пассажирский вагон. Крошечный набор Creator 3-in-1 2014 года — более 10 000 коллекционеров на Brickset."
+  },
+  {
+    num: "30575",
+    name: "Train",
+    theme: "Creator",
+    subtheme: "Miscellaneous",
+    year: 2020,
+    pieces: 59,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$4.99",
+    resale: "$7",
+    designer: "Morten Rauff",
+    ageRange: "6+",
+    img: "img/30575-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/30575",
+    desc: "Миниатюрный поезд в полибэге — подарок за покупку в магазине LEGO. Один из немногих Creator-полибэгов с тягой к поездам от дизайнера Morten Rauff."
+  },
+  {
+    num: "40220",
+    name: "London Bus",
+    theme: "Creator",
+    subtheme: "Promotional",
+    year: 2016,
+    pieces: 118,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$11",
+    designer: "Mel Caddick",
+    ageRange: "7+",
+    img: "img/40220-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/40220",
+    desc: "Миниатюрный лондонский двухэтажный автобус Routemaster в масштабе для коллекционных витрин. Эксклюзивный набор LEGO 2016 года, доступный только в фирменных магазинах."
+  },
+  {
+    num: "60304",
+    name: "Road Plates",
+    theme: "City",
+    subtheme: "Road Plates",
+    year: 2021,
+    pieces: 112,
+    minifigs: 0,
+    status: "active",
+    rrp: "$19.99",
+    resale: "—",
+    designer: "—",
+    ageRange: "5+",
+    img: "img/60304-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60304",
+    desc: "Набор дорожных плиток новой модульной системы City с перекрёстком, пешеходным переходом, светофорами и светящимися в темноте фонарями. Заменяет классические базовые пластины 32×32."
+  },
+  {
+    num: "40488",
+    name: "Coffee Cart",
+    theme: "Creator",
+    subtheme: "Promotional",
+    year: 2021,
+    pieces: 149,
+    minifigs: 2,
+    status: "retired",
+    rrp: "—",
+    resale: "$18",
+    designer: "James May",
+    ageRange: "8+",
+    img: "img/40488-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/40488",
+    desc: "Уличная кофейная тележка с велосипедом и двумя уникальными минифигурками бариста. Подарочный набор при покупке от LEGO.com, ноябрь 2021 года."
+  },
+  {
+    num: "40517",
+    name: "Vespa",
+    theme: "Creator",
+    subtheme: "Promotional",
+    year: 2022,
+    pieces: 118,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$9.99",
+    resale: "$10",
+    designer: "Mike Psiaki",
+    ageRange: "9+",
+    img: "img/40517-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/40517",
+    desc: "Миниатюрная красная Веспа с характерным рулём и сиденьем — компаньон к большому набору 10298. Вышла одновременно с полноразмерной версией в феврале 2022 года."
+  },
+  {
+    num: "76911",
+    name: "007 Aston Martin DB5",
+    theme: "Speed Champions",
+    subtheme: "Aston Martin",
+    year: 2022,
+    pieces: 298,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$28",
+    designer: "—",
+    ageRange: "8+",
+    img: "img/76911-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/76911",
+    desc: "Культовый Aston Martin DB5 Джеймса Бонда с минифигуркой Дэниела Крейга и 4 наборами номерных знаков из разных фильмов. Победитель Brickset Awards 2022 — один из лучших наборов Speed Champions за несколько лет."
+  },
+  {
+    num: "31090",
+    name: "Underwater Robot",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2019,
+    pieces: 207,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$19.99",
+    resale: "$41",
+    designer: "Jeremy Luettgen",
+    ageRange: "7+",
+    img: "img/31090-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31090",
+    desc: "Подводный робот с клешнёй и буром пересобирается в подводную лодку или кран для поиска сокровищ. В комплекте скат-манта — цена выросла более чем вдвое от оригинала."
+  },
+  {
+    num: "21321",
+    name: "International Space Station",
+    theme: "Ideas",
+    subtheme: "NASA",
+    year: 2020,
+    pieces: 864,
+    minifigs: 0,
+    status: "retired",
+    rrp: "$69.99",
+    resale: "$98",
+    designer: "—",
+    ageRange: "16+",
+    img: "img/21321-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/21321",
+    desc: "Детальная модель МКС с 8 поворотными солнечными панелями, манипулятором Canadarm2 и тремя мини-кораблями. LEGO Ideas No.29 — победитель юбилейного голосования по случаю 10-летия платформы."
+  },
+  {
+    num: "31118",
+    name: "Surfer Beach House",
+    theme: "Creator",
+    subtheme: "3 in 1",
+    year: 2021,
+    pieces: 564,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$49.99",
+    resale: "$47",
+    designer: "Morten Rauff",
+    ageRange: "8+",
+    img: "img/31118-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/31118",
+    desc: "Пляжный домик серфера с дельфином, черепахой и крабом пересобирается в маяк или дом с бассейном. Один из самых детализированных и крупных Creator 3-in-1 пляжной тематики."
+  },
+  {
+    num: "40468",
+    name: "Yellow Taxi",
+    theme: "Creator",
+    subtheme: "Miscellaneous",
+    year: 2021,
+    pieces: 124,
+    minifigs: 0,
+    status: "active",
+    rrp: "$9.99",
+    resale: "—",
+    designer: "—",
+    ageRange: "7+",
+    img: "img/40468-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/40468",
+    desc: "Классическое нью-йоркское жёлтое такси с рекламой пиццы и Статуи Свободы на крыше. Эксклюзив фирменных магазинов LEGO — компаньон к набору London Bus 40220."
+  },
+  {
+    num: "60200",
+    name: "Capital City",
+    theme: "City",
+    subtheme: "Town",
+    year: 2018,
+    pieces: 1211,
+    minifigs: 13,
+    status: "retired",
+    rrp: "$149.99",
+    resale: "$169",
+    designer: "—",
+    ageRange: "6–12",
+    img: "img/60200-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60200",
+    desc: "Мегасет центра города: 2-этажный отель, стройплощадка музея, скейт-рампа, двухэтажный автобус, тук-тук мороженого и 13 уникальных минифигурок. Самый крупный набор City Town в своей волне."
+  },
+  {
+    num: "60305",
+    name: "Car Transporter",
+    theme: "City",
+    subtheme: "Great Vehicles",
+    year: 2021,
+    pieces: 342,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$29.99",
+    resale: "$35",
+    designer: "Leon Pijnenburg",
+    ageRange: "5+",
+    img: "img/60305-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/60305",
+    desc: "Автовоз с двухуровневым прицепом и рабочей рампой перевозит мускульный автомобиль со съёмной крышей. Можно загрузить до 3 машин из коллекции City Great Vehicles."
+  },
+  {
+    num: "21181",
+    name: "The Rabbit Ranch",
+    theme: "Minecraft",
+    subtheme: "Minifig-scale",
+    year: 2022,
+    pieces: 340,
+    minifigs: 2,
+    status: "retired",
+    rrp: "$34.99",
+    resale: "$36",
+    designer: "Erik Jensen",
+    ageRange: "8+",
+    img: "img/21181-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/21181",
+    desc: "Кроличья ферма с конюшней, катапультой и зомби-укротителем. Набор Minecraft 2022 года включает двух кроликов и редкую минифигурку зомби-укротителя, уникальную для этого сета."
+  },
+  {
+    num: "41037",
+    name: "Stephanie's Beach House",
+    theme: "Friends",
+    subtheme: "Heartlake City",
+    year: 2014,
+    pieces: 368,
+    minifigs: 1,
+    status: "retired",
+    rrp: "$39.99",
+    resale: "$45",
+    designer: "—",
+    ageRange: "6–12",
+    img: "img/41037-1.jpg",
+    instructions: "https://www.lego.com/en-us/service/building-instructions/41037",
+    desc: "Пляжный домик Стефани с открытым балконом, кухней, гамаком и скутером. Один из первых крупных набор пляжной тематики в линии Friends 2014 года."
+  },
+];
+
+let activeFilters = { theme: null, year: null, status: null };
+let searchQuery = '';
+
+function buildFilters() {
+  const themes = [...new Set(SETS.map(s => s.theme))].sort();
+  const years = [...new Set(SETS.map(s => s.year))].sort((a,b) => b-a);
+  const statuses = [
+    { key: 'active', label: 'В наличии' },
+    { key: 'retired', label: 'Снят с продажи' }
+  ];
+
+  document.getElementById('themeFilters').innerHTML = themes.map(t => {
+    const count = SETS.filter(s => s.theme === t).length;
+    return `<div class="filter-opt" data-type="theme" data-val="${t}" onclick="toggleFilter('theme','${t}')">
+      <span>${t}</span><span class="n">${count}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('yearFilters').innerHTML = years.map(y => {
+    const count = SETS.filter(s => s.year === y).length;
+    return `<div class="filter-opt" data-type="year" data-val="${y}" onclick="toggleFilter('year',${y})">
+      <span>${y}</span><span class="n">${count}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('statusFilters').innerHTML = statuses.map(st => {
+    const count = SETS.filter(s => s.status === st.key).length;
+    return `<div class="filter-opt" data-type="status" data-val="${st.key}" onclick="toggleFilter('status','${st.key}')">
+      <span>${st.label}</span><span class="n">${count}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleFilter(type, val) {
+  activeFilters[type] = activeFilters[type] === val ? null : val;
+  render();
+}
+
+function resetFilters() {
+  activeFilters = { theme: null, year: null, status: null };
+  document.getElementById('searchBox').value = '';
+  searchQuery = '';
+  render();
+}
+
+function getFiltered() {
+  return SETS.filter(s => {
+    if (activeFilters.theme && s.theme !== activeFilters.theme) return false;
+    if (activeFilters.year && s.year !== activeFilters.year) return false;
+    if (activeFilters.status && s.status !== activeFilters.status) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!s.num.includes(q) && !s.name.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function render() {
+  // update filter active states
+  document.querySelectorAll('.filter-opt').forEach(el => {
+    const type = el.dataset.type;
+    const val = el.dataset.val;
+    const isActive = type === 'year'
+      ? activeFilters[type] == val
+      : activeFilters[type] === val;
+    el.classList.toggle('active', isActive);
+  });
+
+  const filtered = getFiltered();
+  document.getElementById('countPill').textContent = `${filtered.length} ${pluralSets(filtered.length)}`;
+
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('emptyState');
+
+  if (filtered.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  grid.style.display = 'grid';
+  empty.style.display = 'none';
+
+  grid.innerHTML = filtered.map(s => `
+    <div class="card" onclick="openModal('${s.num}')">
+      <div class="card-img-wrap">
+        <div class="set-badge">#${s.num}</div>
+        <div class="status-badge ${s.status === 'active' ? 'status-active' : 'status-retired'}">
+          ${s.status === 'active' ? 'В наличии' : 'Снят'}
+        </div>
+        <img src="${s.img}" alt="${s.name}" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <div class="card-theme">${s.theme}${s.subtheme !== '—' ? ' · ' + s.subtheme : ''}</div>
+        <div class="card-title">${s.name}</div>
+        <div class="card-meta">
+          <span><b>${s.year}</b></span>
+          <span><b>${s.pieces}</b> дет.</span>
+          ${s.minifigs > 0 ? `<span><b>${s.minifigs}</b> фигур.</span>` : ''}
+        </div>
+        <div class="card-prices">
+          <div class="price-block">
+            При выпуске
+            <span class="val">${s.rrp}</span>
+          </div>
+          <div class="price-block resale">
+            Вторичка
+            <span class="val">${s.resale}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function pluralSets(n) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'набор';
+  if ([2,3,4].includes(mod10) && ![12,13,14].includes(mod100)) return 'набора';
+  return 'наборов';
+}
+
+function openModal(num) {
+  const s = SETS.find(x => x.num === num);
+  if (!s) return;
+  document.getElementById('modalContent').innerHTML = `
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-img"><img src="${s.img}" alt="${s.name}" onerror="this.style.display='none'"></div>
+    <div class="modal-body">
+      <div class="modal-theme">${s.theme}${s.subtheme !== '—' ? ' · ' + s.subtheme : ''} · #${s.num}</div>
+      <div class="modal-title">${s.name}</div>
+      <div class="modal-desc">${s.desc}</div>
+      <div class="modal-grid">
+        <div class="stat-box"><div class="stat-label">Год выпуска</div><div class="stat-val">${s.year}</div></div>
+        <div class="stat-box"><div class="stat-label">Деталей</div><div class="stat-val">${s.pieces}</div></div>
+        <div class="stat-box"><div class="stat-label">Минифигурок</div><div class="stat-val">${s.minifigs || '—'}</div></div>
+        <div class="stat-box"><div class="stat-label">Возраст</div><div class="stat-val">${s.ageRange}</div></div>
+        <div class="stat-box"><div class="stat-label">Цена при выпуске</div><div class="stat-val">${s.rrp}</div></div>
+        <div class="stat-box"><div class="stat-label">Цена на вторичке</div><div class="stat-val">${s.resale}</div></div>
+      </div>
+      <div class="modal-footer">
+        <a href="${s.instructions}" target="_blank" class="btn-instr">Инструкция по сборке →</a>
+      </div>
+    </div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+document.getElementById('searchBox').addEventListener('input', e => {
+  searchQuery = e.target.value.trim();
+  render();
+});
+
+buildFilters();
+render();
+</script>
+
+</body>
+</html>
